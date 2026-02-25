@@ -1791,28 +1791,25 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
             });
         }
 
-      function handleAuthClick() {
+    function handleAuthClick() {
     tokenClient.callback = async (resp) => {
         if (resp.error !== undefined) {
             throw (resp);
         }
-        // 1. Guardamos la llave físicamente
+        // Guardamos la llave para que no se desconecte
         const token = gapi.client.getToken();
-        saveGDriveToken(token);
-        
-        // 2. Definimos accessToken globalmente para que la otra función la vea
+        saveGDriveToken(token); 
         accessToken = token.access_token;
         
-        console.log("Llave guardada y sincronizada.");
-        if (typeof listFiles === "function") await listFiles();
+        console.log("Conectado exitosamente.");
+        if (typeof listFiles === 'function') await listFiles();
     };
 
-    // Esto abre la ventana de Google
+    // Esto abre la ventana de Google sí o sí
     tokenClient.requestAccessToken({prompt: 'consent'});
 }
 
 async function autoUploadToCloud() {
-    // Usamos el token activo
     const token = gapi.client.getToken();
     if (token && token.access_token) {
         const currentToken = token.access_token;
@@ -1820,7 +1817,7 @@ async function autoUploadToCloud() {
         const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
         
         try {
-            // CORRECCIÓN DE COMILLAS: Usamos ` (backticks) para que la URL no se rompa
+            // CORRECCIÓN CRÍTICA: Usamos comillas invertidas ` y dentro comillas simples '
             const searchResp = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='KADOSH_BACKUP.json'`, {
                 headers: { 'Authorization': `Bearer ${currentToken}` }
             });
@@ -1845,7 +1842,7 @@ async function autoUploadToCloud() {
                 });
             }
         } catch (error) {
-            console.error("Error en la sincronización:", error);
+            console.error("Error en la subida:", error);
         }
     }
 }
