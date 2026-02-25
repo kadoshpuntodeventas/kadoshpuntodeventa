@@ -41,7 +41,35 @@
         
         .clickable-product-row { cursor: pointer; transition: background 0.2s; }
         .clickable-product-row:hover { background: rgba(45, 212, 191, 0.1) !important; }
-    </style>
+/* --- INSERCIÓN QUIRÚRGICA: BARRA DE DESPLAZAMIENTO --- */
+.contenedor-tabla-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    background: rgba(30, 41, 59, 0.4);
+    margin-bottom: 20px;
+}
+
+.contenedor-tabla-scroll table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #0b0f1a; /* Color de fondo igual al de tu body */
+}
+
+.contenedor-tabla-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.contenedor-tabla-scroll::-webkit-scrollbar-thumb {
+    background: #2dd4bf; 
+    border-radius: 10px;
+}
+/* ------------------------------------------------- */    
+</style>
 </head>
 <body class="p-4" onload="initApp()">
 
@@ -533,7 +561,8 @@
         const API_KEY = 'AIzaSyDfn_1CP8xlWsUN4o1OVjn05L1dekMTZmM'; 
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
         const OD_CLIENT_ID = "TU_ONEDRIVE_CLIENT_ID_AQUI"; 
-        let tokenClient, accessToken = null;
+        let tokenClient;
+let accessToken = JSON.parse(localStorage.getItem('G_TOKEN')) || null;
         let oneDriveToken = localStorage.getItem('OD_TOKEN') || null;
 
         let EMPRESA = JSON.parse(localStorage.getItem('RF_EMPRESA')) || { nombre: "KADOSH", direccion: "", telefono: "0000-0000", correo: "tienda@mail.com", rtn: "000-000", kai: "000-000", logo: "", moneda: "L", usoApertura: true, comisionPorcentaje: 50, impuestoPorcentaje: 15, habilitarDiezmo: true };
@@ -1130,67 +1159,94 @@
             
             let filtered = db.filter(p => (p.n.toUpperCase().includes(search) || p.c.includes(search)) && (fCat === "" || p.cat === fCat));
             
-            const invCostoTotal = db.reduce((acc, p) => acc + (p.costo * p.stock), 0);
-            const invVentaP1Total = db.reduce((acc, p) => acc + (p.p1 * p.stock), 0);
-            const invGananciaTotal = invVentaP1Total - invCostoTotal;
-            const invTotalGeneral = invCostoTotal + invVentaP1Total;
+            /* --- INSERCIÓN QUIRÚRGICA: CÁLCULO REAL DE INVENTARIO (COSTO + GANANCIA) --- */
+const invCostoTotal = db.reduce((acc, p) => acc + (p.pc * p.stock), 0);
+const invVentaP1Total = db.reduce((acc, p) => acc + (p.p1 * p.stock), 0);
+const invGananciaTotal = invVentaP1Total - invCostoTotal;
+
+// Cambiamos esta línea para que el total sea Inversión + Ganancia (igual a la Venta Total sin impuestos)
+const invTotalGeneral = invCostoTotal + invGananciaTotal; 
+/* -------------------------------------------------------------------------- */
 
             document.getElementById('total-stock-costo').innerText = invCostoTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('total-stock-ganancia').innerText = invGananciaTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('total-stock-venta').innerText = invTotalGeneral.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-            invList.innerHTML = `
-                <table class="w-full text-left text-xs">
-                    <thead class="text-gray-500 border-b border-slate-800">
-                        <tr><th class="p-4">Producto</th><th>Código</th><th>Cat.</th><th>Stock</th><th>Precios</th><th>Acciones</th></tr>
-                    </thead>
-                    <tbody>
-                        ${filtered.map((p, i) => `
-                            <tr class="border-b border-slate-800/50 ${p.stock <= p.min ? 'stock-alert-row' : ''}">
-                                <td class="p-4">
-                                    <div class="flex items-center gap-3">
-                                        ${p.img ? `<img src="${p.img}" class="img-stock-thumb">` : `<div class="w-[35px] h-[35px] bg-slate-800 rounded flex items-center justify-center">?</div>`}
-                                        <span class="font-bold">${p.n}</span>
-                                    </div>
-                                </td>
-                                <td>${p.c}</td>
-                                <td><span class="bg-slate-800 px-2 py-1 rounded text-[10px] uppercase">${p.cat}</span></td>
-                                <td class="font-bold ${p.stock <= p.min ? 'text-red-400' : 'text-teal-400'}">${p.stock}</td>
-                                <td>
-                                    <div class="grid grid-cols-2 gap-x-4 text-[10px]">
-                                        <span>P1: ${p.p1}</span><span>P2: ${p.p2}</span>
-                                        <span>P3: ${p.p3}</span><span>P4: ${p.p4}</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <button onclick="editProd(${db.indexOf(p)})" class="text-blue-400 mr-2">Editar</button>
-                                    <button onclick="deleteProd(${db.indexOf(p)})" class="text-red-500">Eliminar</button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
+            /* --- INSERCIÓN QUIRÚRGICA: BARRA DE DESPLAZAMIENTO EN STOCK --- */
+    invList.innerHTML = `
+    <div class="contenedor-tabla-scroll">
+        <table class="w-full text-left text-xs">
+            <thead class="text-gray-500 border-b border-slate-800">
+                <tr>
+                    <th class="p-4">Producto</th>
+                    <th>Código</th>
+                    <th>Cat.</th>
+                    <th>Stock</th>
+                    <th>Precios</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${filtered.map((p, i) => `
+                    <tr class="border-b border-slate-800/50 ${p.stock <= p.min ? 'stock-alert-row' : ''}">
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                ${p.img ? `<img src="${p.img}" class="img-stock-thumb">` : `<div class="w-[35px] h-[35px] bg-slate-800 rounded flex items-center justify-center"></div>`}
+                                <span class="font-bold">${p.n}</span>
+                            </div>
+                        </td>
+                        <td>${p.c}</td>
+                        <td><span class="bg-slate-800 px-2 py-1 rounded text-[10px] uppercase">${p.cat}</span></td>
+                        <td class="font-bold ${p.stock <= p.min ? 'text-red-400' : 'text-teal-400'}">${p.stock}</td>
+                        <td>
+                            <div class="grid grid-cols-2 gap-x-4 text-[10px]">
+                                <span>P1: $${p.p1}</span><span>P2: $${p.p2}</span>
+                                <span>P3: $${p.p3}</span><span>P4: $${p.p4}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <button onclick="editProd(${db.indexOf(p)})" class="text-blue-400 mr-2">Editar</button>
+                            <button onclick="deleteProd(${db.indexOf(p)})" class="text-red-500">Eliminar</button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    </div>
+    `;
+    /* -------------------------------------------------------------- */
 
-            const invCaja = document.getElementById('inv-caja-list');
-            invCaja.innerHTML = `
-                <table class="w-full text-left text-[11px]">
-                    <thead class="text-gray-500"><tr><th>Img</th><th>Producto</th><th>Código</th><th>Precio</th><th>Stock</th></tr></thead>
-                    <tbody>
-                        ${db.slice(0, 15).map(p => `
-                            <tr class="clickable-product-row border-b border-slate-800/30" onclick='agregarAlCarrito(${JSON.stringify(p)})'>
-                                <td class="py-2">
-                                    ${p.img ? `<img src="${p.img}" class="w-10 h-10 rounded object-cover border border-slate-700">` : `<div class="w-10 h-10 bg-slate-800 rounded flex items-center justify-center text-[8px]">SIN FOTO</div>`}
-                                </td>
-                                <td class="font-bold uppercase">${p.n}</td>
-                                <td>${p.c}</td>
-                                <td class="font-bold text-teal-400">${EMPRESA.moneda} ${p.p1}</td>
-                                <td class="${p.stock <= p.min ? 'text-red-500 font-black' : 'text-gray-300'}">${p.stock}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
+            /* --- INSERCIÓN QUIRÚRGICA: BARRA DE DESPLAZAMIENTO EN CAJA --- */
+    const invCaja = document.getElementById('inv-caja-list');
+    invCaja.innerHTML = `
+    <div class="contenedor-tabla-scroll">
+        <table class="w-full text-left text-[11px]">
+            <thead class="text-gray-500">
+                <tr>
+                    <th>Img</th>
+                    <th>Producto</th>
+                    <th>Código</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${db.map((p, i) => `
+                    <tr class="border-b border-slate-800/50 clickable-product-row" onclick="addToCart(${i})">
+                        <td>
+                            ${p.img ? `<img src="${p.img}" class="img-stock-thumb">` : `<div class="w-[35px] h-[35px] bg-slate-800 rounded"></div>`}
+                        </td>
+                        <td class="font-bold">${p.n}</td>
+                        <td>${p.c}</td>
+                        <td class="text-teal-400 font-bold">$${p.p1}</td>
+                        <td class="${p.stock <= p.min ? 'text-red-400' : ''}">${p.stock}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    </div>
+    `;
+    /* ------------------------------------------------------------ */
 
             const cliList = document.getElementById('cli-list');
             cliList.innerHTML = clis.map((c, i) => `
@@ -1686,7 +1742,7 @@
                 client_id: CLIENT_ID,
                 scope: SCOPES,
                 callback: (resp) => {
-                    accessToken = resp.access_token;
+                    accessToken = resp.access_token;localStorage.setItem('G_TOKEN', JSON.stringify(accessToken));
                     document.getElementById('sync-indicator').className = "sync-online";
                     document.getElementById('sync-indicator').innerText = "● DRIVE CONECTADO";
                     autoUploadToCloud();
