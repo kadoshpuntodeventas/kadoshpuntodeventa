@@ -1792,28 +1792,70 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
         }
 
         function handleAuthClick() {
-    tokenClient.callback = async (resp) => {
-        if (resp.error !== undefined) {
-            throw (resp);
-        }
-        
-        /* --- INSERCIÓN QUIRÚRGICA CRÍTICA --- */
-        const token = gapi.client.getToken();
-        saveGDriveToken(token); 
-        accessToken = token.access_token; // Esta línea es la que falta para que el botón se ponga VERDE
-        /* ------------------------------------ */
-        
-        console.log("Conexión exitosa. Llave guardada en el equipo.");
-        
-        if (typeof listFiles === "function") {
-            await listFiles();
-        }
-    };
+    try {
+        tokenClient.callback = async (resp) => {
+            if (resp.error !== undefined) {
+                console.error("Error en autenticación:", resp);
+                throw (resp);
+            }
+            
+            // INSERCIÓN QUIRÚRGICA PARA REPARAR EL BOTÓN
+            const token = gapi.client.getToken();
+            if (token) {
+                saveGDriveToken(token); 
+                accessToken = token.access_token; 
+                console.log("Llave sincronizada correctamente.");
+                
+                // Si existe la función de listar, la ejecuta
+                if (typeof listFiles === "function") {
+                    await listFiles();
+                }
+            }
+        };
 
-    if (gapi.client.getToken() === null) {
-        tokenClient.requestAccessToken({prompt: 'consent'});
-    } else {
-        tokenClient.requestAccessToken({prompt: ''});
+        // Esto abre la ventana de Google sí o sí
+        if (gapi.client.getToken() === null) {
+            tokenClient.requestAccessToken({prompt: 'consent'});
+        } else {
+            tokenClient.requestAccessToken({prompt: ''});
+        }
+    } catch (err) {
+        console.error("Error al abrir la vinculación:", err);
+    }
+}
+
+async function autoUploadToCloud() {
+    if (typeof accessToken !== 'undefined' && accessToken) {
+        const data = { db, clis, provs, hist, gastos, emps, categories, cierres, EMPRESA };
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        
+        try {
+            const searchResp = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='KADOSH_BACKUP.json'`, {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            const searchRes = await searchResp.json();
+
+            if (searchRes.files && searchRes.files.length > 0) {
+                const fileId = searchRes.files[0].id;
+                await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                    body: blob
+                });
+            } else {
+                const metadata = { name: 'KADOSH_BACKUP.json', mimeType: 'application/json' };
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', blob);
+                await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                    body: form
+                });
+            }
+        } catch (error) {
+            console.error("Error en la subida automática:", error);
+        }
     }
 }
 
