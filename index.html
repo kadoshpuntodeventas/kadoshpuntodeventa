@@ -1791,35 +1791,62 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
             });
         }
 
-       function handleAuthClick() {
-    try {
-        tokenClient.callback = async (resp) => {
-            if (resp.error !== undefined) {
-                console.error("Error en autenticación:", resp);
-                throw (resp);
-            }
-            
-            // INSERCIÓN QUIRÚRGICA: Guardamos la llave y activamos el botón VERDE
-            const token = gapi.client.getToken();
-            if (token) {
-                saveGDriveToken(token); 
-                accessToken = token.access_token; 
-                console.log("Llave sincronizada correctamente.");
-                
-                if (typeof listFiles === "function") {
-                    await listFiles();
-                }
-            }
-        };
-
-        // ESTA ES LA ORDEN QUE ABRE LA VENTANA (No la borres)
-        if (gapi.client.getToken() === null) {
-            tokenClient.requestAccessToken({prompt: 'consent'});
-        } else {
-            tokenClient.requestAccessToken({prompt: ''});
+      function handleAuthClick() {
+    tokenClient.callback = async (resp) => {
+        if (resp.error !== undefined) {
+            throw (resp);
         }
-    } catch (err) {
-        console.error("Error al abrir la vinculación:", err);
+        // 1. Guardamos la llave físicamente
+        const token = gapi.client.getToken();
+        saveGDriveToken(token);
+        
+        // 2. Definimos accessToken globalmente para que la otra función la vea
+        accessToken = token.access_token;
+        
+        console.log("Llave guardada y sincronizada.");
+        if (typeof listFiles === "function") await listFiles();
+    };
+
+    // Esto abre la ventana de Google
+    tokenClient.requestAccessToken({prompt: 'consent'});
+}
+
+async function autoUploadToCloud() {
+    // Usamos el token activo
+    const token = gapi.client.getToken();
+    if (token && token.access_token) {
+        const currentToken = token.access_token;
+        const data = { db, clis, provs, hist, gastos, emps, categories, cierres, EMPRESA };
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        
+        try {
+            // CORRECCIÓN DE COMILLAS: Usamos ` (backticks) para que la URL no se rompa
+            const searchResp = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='KADOSH_BACKUP.json'`, {
+                headers: { 'Authorization': `Bearer ${currentToken}` }
+            });
+            const searchRes = await searchResp.json();
+
+            if (searchRes.files && searchRes.files.length > 0) {
+                const fileId = searchRes.files[0].id;
+                await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${currentToken}` },
+                    body: blob
+                });
+            } else {
+                const metadata = { name: 'KADOSH_BACKUP.json', mimeType: 'application/json' };
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', blob);
+                await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${currentToken}` },
+                    body: form
+                });
+            }
+        } catch (error) {
+            console.error("Error en la sincronización:", error);
+        }
     }
 }
 
