@@ -1791,21 +1791,29 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
             });
         }
 
-    function handleAuthClick() {
+    ffunction handleAuthClick() {
     tokenClient.callback = async (resp) => {
         if (resp.error !== undefined) {
             throw (resp);
         }
-        // Guardamos la llave para que no se desconecte
+        
+        // 1. Guardamos la llave físicamente para que no se desconecte
         const token = gapi.client.getToken();
         saveGDriveToken(token); 
         accessToken = token.access_token;
         
+        // 2. INSERCIÓN QUIRÚRGICA: Cambiar el indicador a VERDE de inmediato
+        const cloudStatus = document.querySelector('.status-disconnected') || document.getElementById('cloud-status');
+        if (cloudStatus) {
+            cloudStatus.textContent = '● NUBE CONECTADA';
+            cloudStatus.style.color = '#4ade80'; // Verde brillante
+        }
+
         console.log("Conectado exitosamente.");
         if (typeof listFiles === 'function') await listFiles();
     };
 
-    // Esto abre la ventana de Google sí o sí
+    // Esto abre la ventana de Google que ya logramos activar
     tokenClient.requestAccessToken({prompt: 'consent'});
 }
 
