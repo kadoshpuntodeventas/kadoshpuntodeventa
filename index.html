@@ -1791,7 +1791,7 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
             });
         }
 
-        function handleAuthClick() {
+       function handleAuthClick() {
     try {
         tokenClient.callback = async (resp) => {
             if (resp.error !== undefined) {
@@ -1799,21 +1799,20 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
                 throw (resp);
             }
             
-            // INSERCIÓN QUIRÚRGICA PARA REPARAR EL BOTÓN
+            // INSERCIÓN QUIRÚRGICA: Guardamos la llave y activamos el botón VERDE
             const token = gapi.client.getToken();
             if (token) {
                 saveGDriveToken(token); 
                 accessToken = token.access_token; 
                 console.log("Llave sincronizada correctamente.");
                 
-                // Si existe la función de listar, la ejecuta
                 if (typeof listFiles === "function") {
                     await listFiles();
                 }
             }
         };
 
-        // Esto abre la ventana de Google sí o sí
+        // ESTA ES LA ORDEN QUE ABRE LA VENTANA (No la borres)
         if (gapi.client.getToken() === null) {
             tokenClient.requestAccessToken({prompt: 'consent'});
         } else {
