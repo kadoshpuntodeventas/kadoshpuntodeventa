@@ -1797,12 +1797,12 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
             throw (resp);
         }
         
-        // 1. Guardamos la llave físicamente
+        // Guardamos la llave físicamente
         const token = gapi.client.getToken();
         saveGDriveToken(token); 
         accessToken = token.access_token;
         
-        // 2. INSERCIÓN QUIRÚRGICA: Cambiar el indicador a VERDE
+        // Actualización visual inmediata a VERDE
         const cloudStatus = document.querySelector('.status-disconnected') || document.getElementById('cloud-status');
         if (cloudStatus) {
             cloudStatus.textContent = '● NUBE CONECTADA';
@@ -1825,7 +1825,6 @@ async function autoUploadToCloud() {
         const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
         
         try {
-            // CORRECCIÓN CRÍTICA: Usamos comillas invertidas ` y dentro comillas simples '
             const searchResp = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='KADOSH_BACKUP.json'`, {
                 headers: { 'Authorization': `Bearer ${currentToken}` }
             });
@@ -1850,7 +1849,7 @@ async function autoUploadToCloud() {
                 });
             }
         } catch (error) {
-            console.error("Error en la subida:", error);
+            console.error("Error en la sincronización:", error);
         }
     }
 }
