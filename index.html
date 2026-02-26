@@ -1797,27 +1797,27 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
             throw (resp);
         }
         
-        // Guardamos la llave físicamente
+        // 1. Guardamos la llave para que sea permanente
         const token = gapi.client.getToken();
         saveGDriveToken(token); 
         accessToken = token.access_token;
         
-        // Actualización visual inmediata a VERDE
-        const cloudStatus = document.querySelector('.status-disconnected') || document.getElementById('cloud-status');
+        // 2. FORZAR INDICADOR VERDE (Esto es lo que te falta)
+        const cloudStatus = document.getElementById('cloud-status') || document.querySelector('.status-disconnected');
         if (cloudStatus) {
             cloudStatus.textContent = '● NUBE CONECTADA';
-            cloudStatus.style.color = '#4ade80';
+            cloudStatus.style.color = '#4ade80'; // Color Verde
         }
 
-        console.log("Conectado exitosamente.");
+        console.log("Sincronización activada correctamente.");
         if (typeof listFiles === 'function') await listFiles();
     };
 
-    // Esto abre la ventana de Google
+    // Abre la ventana de permisos
     tokenClient.requestAccessToken({prompt: 'consent'});
 }
 
-async function autoUploadToCloud() {
+ async function autoUploadToCloud() {
     const token = gapi.client.getToken();
     if (token && token.access_token) {
         const currentToken = token.access_token;
