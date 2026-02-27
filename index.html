@@ -1797,27 +1797,27 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
             throw (resp);
         }
         
-        // 1. Guardamos la llave para que sea permanente
+        // 1. Guardamos la llave físicamente
         const token = gapi.client.getToken();
         saveGDriveToken(token); 
         accessToken = token.access_token;
         
-        // 2. FORZAR INDICADOR VERDE (Esto es lo que te falta)
-        const cloudStatus = document.getElementById('cloud-status') || document.querySelector('.status-disconnected');
+        // 2. INSERCIÓN QUIRÚRGICA: Cambiar el indicador a VERDE
+        const cloudStatus = document.querySelector('.status-disconnected') || document.getElementById('cloud-status');
         if (cloudStatus) {
             cloudStatus.textContent = '● NUBE CONECTADA';
-            cloudStatus.style.color = '#4ade80'; // Color Verde
+            cloudStatus.style.color = '#4ade80';
         }
 
-        console.log("Sincronización activada correctamente.");
+        console.log("Conectado exitosamente.");
         if (typeof listFiles === 'function') await listFiles();
     };
 
-    // Abre la ventana de permisos
-    tokenClient.requestAccessToken({prompt: 'consent'});
+    // Esto abre la ventana de Google
+    tokenClient.requestAccessToken({prompt: 'consent select_account'});
 }
 
- async function autoUploadToCloud() {
+async function autoUploadToCloud() {
     const token = gapi.client.getToken();
     if (token && token.access_token) {
         const currentToken = token.access_token;
@@ -1825,6 +1825,7 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
         const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
         
         try {
+            // CORRECCIÓN CRÍTICA: Usamos comillas invertidas ` y dentro comillas simples '
             const searchResp = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='KADOSH_BACKUP.json'`, {
                 headers: { 'Authorization': `Bearer ${currentToken}` }
             });
@@ -1849,7 +1850,7 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
                 });
             }
         } catch (error) {
-            console.error("Error en la sincronización:", error);
+            console.error("Error en la subida:", error);
         }
     }
 }
