@@ -1818,9 +1818,10 @@ function handleAuthClick() {
         if (typeof listFiles === 'function') await listFiles();
     };
 
-    // 2. ABRIR VENTANA DE GOOGLE CON PERMISOS FORZADOS
+    // 2. ACTIVADOR: Abre la ventana de Google
     tokenClient.requestAccessToken({prompt: 'consent select_account'});
 }
+
 async function autoUploadToCloud() {
     const token = gapi.client.getToken();
     if (token && token.access_token) {
@@ -1847,7 +1848,7 @@ async function autoUploadToCloud() {
                 const form = new FormData();
                 form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
                 form.append('file', blob);
-                await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                await fetch('https://https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${currentToken}` },
                     body: form
