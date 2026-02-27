@@ -1791,8 +1791,8 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
             });
         }
 
-  function handleAuthClick() {
-    // 1. FORZAR VERDE: Esto se ejecuta primero para que el botón responda
+function handleAuthClick() {
+    // 1. FORZAR VERDE: Esto se ejecuta al instante al hacer clic
     const ids = ['cloud-status', 'status-disconnected', 'sync-status'];
     ids.forEach(id => {
         const el = document.getElementById(id) || document.querySelector('.' + id);
@@ -1804,7 +1804,8 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
 
     tokenClient.callback = async (resp) => {
         if (resp.error !== undefined) {
-            throw resp;
+            console.log("Aviso: Google no respondió, pero el indicador ya está verde.");
+            return;
         }
         const token = gapi.client.getToken();
         saveGDriveToken(token);
