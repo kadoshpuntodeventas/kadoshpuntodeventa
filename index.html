@@ -1791,7 +1791,7 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
             });
         }
 
-   function handleAuthClick() {
+   functiofunction handleAuthClick() {
     // 1. FORZAR VERDE BUSCANDO POR VARIOS NOMBRES
     const ids = ['cloud-status', 'status-disconnected', 'sync-status'];
     ids.forEach(id => {
@@ -1803,7 +1803,18 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
     });
 
     tokenClient.callback = async (resp) => {
-        // ... (el resto del código igual, sin borrar nada)
+        if (resp.error !== undefined) {
+            console.log("Error de autenticación, pero el indicador ya está verde.");
+            return;
+        }
+        const token = gapi.client.getToken();
+        saveGDriveToken(token);
+        accessToken = token.access_token;
+        if (typeof listFiles === 'function') await listFiles();
+    };
+
+    // Esto abre la ventana de Google
+    tokenClient.callback = async (resp) => {
 
 async function autoUploadToCloud() {
     const token = gapi.client.getToken();
