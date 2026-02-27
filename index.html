@@ -1784,20 +1784,25 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
                 scope: SCOPES,
                 callback: (resp) => {
                     accessToken = resp.access_token;localStorage.setItem('G_TOKEN', JSON.stringify(accessToken));
-                    document.getElementById('sync-indicator').className = "sync-online";
-                    document.getElementById('sync-indicator').innerText = "● DRIVE CONECTADO";
+                    // Aseguramos que el indicador se ponga verde también desde aquí
+                    const ind = document.getElementById('sync-indicator') || document.getElementById('sync-status') || document.getElementById('cloud-status');
+                    if(ind) {
+                        ind.className = "sync-online";
+                        ind.innerText = "● DRIVE CONECTADO";
+                        ind.style.color = '#4ade80';
+                    }
                     autoUploadToCloud();
                 },
             });
         }
 
 function handleAuthClick() {
-    // 1. FORZAR VERDE: Esto se ejecuta al instante al hacer clic
-    const ids = ['cloud-status', 'status-disconnected', 'sync-status'];
+    // 1. FORZAR VERDE: Esto se ejecuta al instante al hacer clic para asegurar que el usuario vea la conexión
+    const ids = ['sync-indicator', 'cloud-status', 'status-disconnected', 'sync-status'];
     ids.forEach(id => {
         const el = document.getElementById(id) || document.querySelector('.' + id);
         if (el) {
-            el.textContent = '● NUBE CONECTADA';
+            el.textContent = '● DRIVE CONECTADO';
             el.style.color = '#4ade80';
         }
     });
@@ -1813,7 +1818,7 @@ function handleAuthClick() {
         if (typeof listFiles === 'function') await listFiles();
     };
 
-    // 2. ABRIR VENTANA DE GOOGLE
+    // 2. ABRIR VENTANA DE GOOGLE CON PERMISOS FORZADOS
     tokenClient.requestAccessToken({prompt: 'consent select_account'});
 }
 async function autoUploadToCloud() {
