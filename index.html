@@ -1779,25 +1779,25 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
         }
 
         function gisLoaded() {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: (resp) => {
-                    accessToken = resp.access_token;localStorage.setItem('G_TOKEN', JSON.stringify(accessToken));
-                    // Aseguramos que el indicador se ponga verde también desde aquí
-                    const ind = document.getElementById('sync-indicator') || document.getElementById('sync-status') || document.getElementById('cloud-status');
-                    if(ind) {
-                        ind.className = "sync-online";
-                        ind.innerText = "● DRIVE CONECTADO";
-                        ind.style.color = '#4ade80';
-                    }
-                    autoUploadToCloud();
-                },
-            });
-        }
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: (resp) => {
+            accessToken = resp.access_token;
+            localStorage.setItem('G_TOKEN', JSON.stringify(accessToken));
+            const ind = document.getElementById('sync-indicator') || document.getElementById('sync-status') || document.getElementById('cloud-status');
+            if(ind) {
+                ind.className = "sync-online";
+                ind.innerText = "● DRIVE CONECTADO";
+                ind.style.color = '#4ade80';
+            }
+            autoUploadToCloud();
+        },
+    });
+}
 
 function handleAuthClick() {
-    // 1. FORZAR VERDE: Esto se ejecuta al instante al hacer clic para asegurar que el usuario vea la conexión
+    // 1. FORZAR VERDE: Acción inmediata al hacer clic
     const ids = ['sync-indicator', 'cloud-status', 'status-disconnected', 'sync-status'];
     ids.forEach(id => {
         const el = document.getElementById(id) || document.querySelector('.' + id);
@@ -1820,44 +1820,6 @@ function handleAuthClick() {
 
     // 2. ACTIVADOR: Abre la ventana de Google
     tokenClient.requestAccessToken({prompt: 'consent select_account'});
-}
-
-async function autoUploadToCloud() {
-    const token = gapi.client.getToken();
-    if (token && token.access_token) {
-        const currentToken = token.access_token;
-        const data = { db, clis, provs, hist, gastos, emps, categories, cierres, EMPRESA };
-        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-        
-        try {
-            // CORRECCIÓN CRÍTICA: Usamos comillas invertidas ` y dentro comillas simples '
-            const searchResp = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='KADOSH_BACKUP.json'`, {
-                headers: { 'Authorization': `Bearer ${currentToken}` }
-            });
-            const searchRes = await searchResp.json();
-
-            if (searchRes.files && searchRes.files.length > 0) {
-                const fileId = searchRes.files[0].id;
-                await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-                    method: 'PATCH',
-                    headers: { 'Authorization': `Bearer ${currentToken}` },
-                    body: blob
-                });
-            } else {
-                const metadata = { name: 'KADOSH_BACKUP.json', mimeType: 'application/json' };
-                const form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', blob);
-                await fetch('https://https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${currentToken}` },
-                    body: form
-                });
-            }
-        } catch (error) {
-            console.error("Error en la subida:", error);
-        }
-    }
 }
 
 async function autoUploadToCloud() {
@@ -1895,75 +1857,16 @@ async function autoUploadToCloud() {
     }
 }
 
-async function autoUploadToCloud() {
-    if(accessToken) {
-        const data = { db, clis, provs, hist, gastos, emps, categories, cierres, EMPRESA };
-        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-        const searchResp = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='KADOSH_BACKUP.json'`, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-        const searchRes = await searchResp.json();
-
-        if (searchRes.files && searchRes.files.length > 0) {
-            const fileId = searchRes.files[0].id;
-            await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${accessToken}` },
-                body: blob
-            });
-        } else {
-            const metadata = { name: 'KADOSH_BACKUP.json', mimeType: 'application/json' };
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            form.append('file', blob);
-            await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${accessToken}` },
-                body: form
-            });
-        }
-    }
+function vincularOneDrive() {
+    const redirectUri = window.location.origin + window.location.pathname;
+    const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${OD_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=files.readwrite.all`;
+    window.location.href = authUrl;
 }
 
-async function autoUploadToCloud() {
-    if(accessToken) {
-        const data = { db, clis, provs, hist, gastos, emps, categories, cierres, EMPRESA };
-        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-        const searchResp = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='KADOSH_BACKUP.json'`, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-        const searchRes = await searchResp.json();
-        
-        if(searchRes.files && searchRes.files.length > 0) {
-            const fileId = searchRes.files[0].id;
-            await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${accessToken}` },
-                body: blob
-            });
-        } else {
-            const metadata = { name: 'KADOSH_BACKUP.json', mimeType: 'application/json' };
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            form.append('file', blob);
-            await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${accessToken}` },
-                body: form
-            });
-        }
-    }
-}
-
-        function vincularOneDrive() {
-            const redirectUri = window.location.origin + window.location.pathname;
-            const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${OD_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=files.readwrite.all`;
-            window.location.href = authUrl;
-        }
 function generarNumeroFactura() {
-            const numVentas = hist.length + 1;
-            return "000-001-" + numVentas.toString().padStart(6, '0');
-        }
+    const numVentas = hist.length + 1;
+    return "000-001-" + numVentas.toString().padStart(6, '0');
+}
     </script>
 </body>
 </html>
