@@ -1791,7 +1791,7 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
             });
         }
 
-   functiofunction handleAuthClick() {
+  function handleAuthClick() {
     // 1. FORZAR VERDE BUSCANDO POR VARIOS NOMBRES
     const ids = ['cloud-status', 'status-disconnected', 'sync-status'];
     ids.forEach(id => {
@@ -1814,8 +1814,8 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
     };
 
     // Esto abre la ventana de Google
-    tokenClient.callback = async (resp) => {
-
+    tokenClient.requestAccessToken({prompt: 'consent select_account'});
+}
 async function autoUploadToCloud() {
     const token = gapi.client.getToken();
     if (token && token.access_token) {
