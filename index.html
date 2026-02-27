@@ -1826,38 +1826,46 @@ function handleAuthClick() {
 }
 
 async function autoUploadToCloud() {
-    if (typeof accessToken !== 'undefined' && accessToken) {
-        const data = { db, clis, provs, hist, gastos, emps, categories, cierres, EMPRESA };
-        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-        
-        try {
-            const searchResp = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='KADOSH_BACKUP.json'`, {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-            const searchRes = await searchResp.json();
+    if (!accessToken) return;
 
-            if (searchRes.files && searchRes.files.length > 0) {
-                const fileId = searchRes.files[0].id;
-                await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-                    method: 'PATCH',
-                    headers: { 'Authorization': `Bearer ${accessToken}` },
-                    body: blob
-                });
-            } else {
-                const metadata = { name: 'KADOSH_BACKUP.json', mimeType: 'application/json' };
-                const form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', blob);
-                await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${accessToken}` },
-                    body: form
-                });
-            }
-        } catch (error) {
-            console.error("Error en la subida automática:", error);
+    // Los datos que quieres respaldar
+    const datos = { db, clis, provs, hist, emps, categories, cierres, EMPRESA };
+    const blob = new Blob([JSON.stringify(datos)], { type: 'application/json' });
+
+    try {
+        // 1. Buscamos si existe el archivo
+        const response = await fetch("https://www.googleapis.com/drive/v3/files?q=name='KADOSH_BACKUP.json'", {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        const data = await response.json();
+
+        if (data.files && data.files.length > 0) {
+            // 2. Si existe, lo actualizamos (PATCH)
+            const fileId = data.files[0].id;
+            await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+                body: blob
+            });
+            console.log("✅ Respaldo actualizado");
+        } else {
+            // 3. Si no existe, lo creamos (POST)
+            const metadata = { name: 'KADOSH_BACKUP.json', mimeType: 'application/json' };
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            form.append('file', blob);
+
+            await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+                body: form
+            });
+            console.log("✅ Respaldo creado");
         }
+    } catch (e) {
+        console.error("Error de subida:", e);
     }
+}
 }
 
 function vincularOneDrive() {
