@@ -1786,15 +1786,19 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
             if (resp.access_token) {
                 accessToken = resp.access_token;
                 localStorage.setItem('G_TOKEN', accessToken);
-                actualizarInterfazNube(true); // Se pone verde al conectar
+                // ESTA LÍNEA ACTIVA LA CONEXIÓN REAL AL INSTANTE
+                gapi.client.setToken({access_token: accessToken}); 
+                actualizarInterfazNube(true);
                 autoUploadToCloud();
             }
         },
     });
 
-    // Esto revisa si ya habías entrado antes para que la nube inicie en verde
+    // MANTENER CONECTADO AL REFRESCAR
     if (localStorage.getItem('G_TOKEN')) {
         accessToken = localStorage.getItem('G_TOKEN');
+        // ESTA LÍNEA RECUPERA LA LLAVE AUTOMÁTICAMENTE
+        gapi.client.setToken({access_token: accessToken}); 
         actualizarInterfazNube(true);
     }
 }
