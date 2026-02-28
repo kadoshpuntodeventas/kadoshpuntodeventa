@@ -1778,8 +1778,8 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
             }
         }
 
-       function gisLoaded() {
-    // 1. Configuración del cliente para nuevos inicios de sesión
+      function gisLoaded() {
+    // 1. Configuración para nuevos inicios de sesión
     tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
@@ -1787,7 +1787,7 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
             if (resp.access_token) {
                 accessToken = resp.access_token;
                 localStorage.setItem('G_TOKEN', accessToken);
-                // Conecta la librería realmente
+                // Conexión activa inmediata
                 if (window.gapi && gapi.client) {
                     gapi.client.setToken({access_token: accessToken});
                 }
@@ -1797,41 +1797,40 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
         },
     });
 
-    // 2. MANTENER CONECTADO (Esto es lo que falta en tu foto y es VITAL)
-    if (localStorage.getItem('G_TOKEN')) {
-        accessToken = localStorage.getItem('G_TOKEN');
+    // 2. MANTENER CONEXIÓN SIEMPRE (Recuperación automática)
+    const savedToken = localStorage.getItem('G_TOKEN');
+    if (savedToken) {
+        accessToken = savedToken;
+        // Verifica que la librería esté lista antes de asignar el token
         if (window.gapi && gapi.client) {
             gapi.client.setToken({access_token: accessToken});
+            actualizarInterfazNube(true);
         }
-        actualizarInterfazNube(true);
     }
 }
 
-    // ESTO MANTIENE LA SESIÓN SIEMPRE ACTIVA
-    if (localStorage.getItem('G_TOKEN')) {
-        accessToken = localStorage.getItem('G_TOKEN');
-        if (window.gapi && gapi.client) {
-            gapi.client.setToken({access_token: accessToken});
-        }
-        actualizarInterfazNube(true);
+// ESTO MANTIENE LA SESIÓN SIEMPRE ACTIVA (Mantenido íntegro como lo pediste)
+if (localStorage.getItem('G_TOKEN')) {
+    accessToken = localStorage.getItem('G_TOKEN');
+    if (window.gapi && gapi.client) {
+        gapi.client.setToken({access_token: accessToken});
     }
+    actualizarInterfazNube(true);
 }
 
-    // ESTA ES LA PARTE QUE FALTA EN TU FOTO Y QUE HACE QUE NADA FUNCIONE:
-    if (localStorage.getItem('G_TOKEN')) {
-        accessToken = localStorage.getItem('G_TOKEN');
-        if (gapi.client) gapi.client.setToken({access_token: accessToken});
-        actualizarInterfazNube(true);
-    }
+// ESTA ES LA PARTE QUE FALTA EN TU FOTO Y QUE HACE QUE NADA FUNCIONE (Mantenido íntegro)
+if (localStorage.getItem('G_TOKEN')) {
+    accessToken = localStorage.getItem('G_TOKEN');
+    if (window.gapi && window.gapi.client) gapi.client.setToken({access_token: accessToken});
+    actualizarInterfazNube(true);
 }
 
-    // MANTENER CONECTADO AL REFRESCAR
-    if (localStorage.getItem('G_TOKEN')) {
-        accessToken = localStorage.getItem('G_TOKEN');
-        // ESTA LÍNEA RECUPERA LA LLAVE AUTOMÁTICAMENTE
-        gapi.client.setToken({access_token: accessToken}); 
-        actualizarInterfazNube(true);
-    }
+// MANTENER CONECTADO AL REFRESCAR (Mantenido íntegro)
+if (localStorage.getItem('G_TOKEN')) {
+    accessToken = localStorage.getItem('G_TOKEN');
+    // ESTA LÍNEA RECUPERA LA LLAVE AUTOMÁTICAMENTE
+    if (window.gapi && window.gapi.client) gapi.client.setToken({access_token: accessToken}); 
+    actualizarInterfazNube(true);
 }
 
 function handleAuthClick() {
@@ -1851,7 +1850,7 @@ function handleAuthClick() {
             return;
         }
         const token = gapi.client.getToken();
-        saveGDriveToken(token);
+        // saveGDriveToken(token);
         accessToken = token.access_token;
         if (typeof listFiles === 'function') await listFiles();
     };
@@ -1901,7 +1900,6 @@ async function autoUploadToCloud() {
         console.error("Error de subida:", e);
     }
 }
-}
 
 function vincularOneDrive() {
     const redirectUri = window.location.origin + window.location.pathname;
@@ -1913,26 +1911,26 @@ function generarNumeroFactura() {
     const numVentas = hist.length + 1;
     return "000-001-" + numVentas.toString().padStart(6, '0');
 }
+
 function actualizarInterfazNube(conectado) {
     const ids = ['sync-indicator', 'cloud-status', 'sync-status'];
     ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
-            // Reemplaza los estilos dentro del "if (conectado)" por estos:
-if (conectado) {
-    el.innerText = '● DRIVE CONECTADO';
-    el.style.setProperty('background-color', '#064e3b', 'important'); // Verde oscuro
-    el.style.setProperty('color', '#4ade80', 'important');           // Letras verdes
-    el.style.setProperty('border-color', '#059669', 'important');    // Borde verde
-} else {
-    el.innerText = '● DRIVE DESCONECTADO';
-    el.style.setProperty('background-color', '#450a0a', 'important'); // Rojo oscuro
-    el.style.setProperty('color', '#f87171', 'important');           // Letras rojas
-    el.style.setProperty('border-color', '#991b1b', 'important');    // Borde rojo
-}
+            if (conectado) {
+                el.innerText = '● DRIVE CONECTADO';
+                el.style.setProperty('background-color', '#064e3b', 'important'); // Verde oscuro
+                el.style.setProperty('color', '#4ade80', 'important');           // Letras verdes
+                el.style.setProperty('border-color', '#059669', 'important');    // Borde verde
+            } else {
+                el.innerText = '● DRIVE DESCONECTADO';
+                el.style.setProperty('background-color', '#450a0a', 'important'); // Rojo oscuro
+                el.style.setProperty('color', '#f87171', 'important');           // Letras rojas
+                el.style.setProperty('border-color', '#991b1b', 'important');    // Borde rojo
+            }
         }
     });
-}    
+}
 </script>
 </body>
 </html>
