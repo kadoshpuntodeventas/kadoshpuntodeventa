@@ -1779,6 +1779,7 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
         }
 
        function gisLoaded() {
+    // 1. Configuración del cliente para nuevos inicios de sesión
     tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
@@ -1786,13 +1787,43 @@ const invTotalGeneral = invCostoTotal + invGananciaTotal;
             if (resp.access_token) {
                 accessToken = resp.access_token;
                 localStorage.setItem('G_TOKEN', accessToken);
-                // ESTA LÍNEA ACTIVA LA CONEXIÓN REAL AL INSTANTE
-                gapi.client.setToken({access_token: accessToken}); 
+                // Conecta la librería realmente
+                if (window.gapi && gapi.client) {
+                    gapi.client.setToken({access_token: accessToken});
+                }
                 actualizarInterfazNube(true);
                 autoUploadToCloud();
             }
         },
     });
+
+    // 2. MANTENER CONECTADO (Esto es lo que falta en tu foto y es VITAL)
+    if (localStorage.getItem('G_TOKEN')) {
+        accessToken = localStorage.getItem('G_TOKEN');
+        if (window.gapi && gapi.client) {
+            gapi.client.setToken({access_token: accessToken});
+        }
+        actualizarInterfazNube(true);
+    }
+}
+
+    // ESTO MANTIENE LA SESIÓN SIEMPRE ACTIVA
+    if (localStorage.getItem('G_TOKEN')) {
+        accessToken = localStorage.getItem('G_TOKEN');
+        if (window.gapi && gapi.client) {
+            gapi.client.setToken({access_token: accessToken});
+        }
+        actualizarInterfazNube(true);
+    }
+}
+
+    // ESTA ES LA PARTE QUE FALTA EN TU FOTO Y QUE HACE QUE NADA FUNCIONE:
+    if (localStorage.getItem('G_TOKEN')) {
+        accessToken = localStorage.getItem('G_TOKEN');
+        if (gapi.client) gapi.client.setToken({access_token: accessToken});
+        actualizarInterfazNube(true);
+    }
+}
 
     // MANTENER CONECTADO AL REFRESCAR
     if (localStorage.getItem('G_TOKEN')) {
